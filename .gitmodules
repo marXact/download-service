@@ -1,0 +1,3 @@
+[submodule "surveycontracts"]
+	path = surveycontracts
+	url = git@bitbucket.org:marxactdev/surveycontracts.git
