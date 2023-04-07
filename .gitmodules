@@ -1,3 +1,6 @@
 [submodule "surveycontracts"]
 	path = surveycontracts
 	url = git@bitbucket.org:marxactdev/surveycontracts.git
+[submodule "unisharedmodels"]
+	path = unisharedmodels
+	url = git@bitbucket.org:marxactdev/unisharedmodels.git

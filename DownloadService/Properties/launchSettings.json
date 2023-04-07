@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "DownloadService": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "hc",
+      "applicationUrl": "https://host.docker.internal:1060",
+      "environmentVariables": {
+        "ASPNETCORE_URLS": "https://host.docker.internal:1060",
+        "ASPNETCORE_ENVIRONMENT": "Development"
+        //"SURVEYSERVICE_DB_HOST": "host.docker.internal",
+        //"SURVEYSERVICE_DB_NAME": "surveyservice",
+        //"SURVEYSERVICE_DB_USER": "marxact",
+        //"SURVEYSERVICE_DB_PASSWORD": "MarXactSurvey2020!",
+        //"SURVEYSERVICE_DB_PORT": "1053",
+        //"SURVEYSERVICE_SSL_MODE": "Prefer;Trust Server Certificate=true",
+        //"ASPNETCORE_Kestrel__Certificates__Default__Path": "../development-certificates/certs/marxact.marxact.pfx",
+        //"ASPNETCORE_Kestrel__Certificates__Default__Password": "Marxact01!"
+      }
+    }
+  }
+}

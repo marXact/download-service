@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="RdNapTrans2008\**" />
+    <Content Remove="RdNapTrans2008\**" />
+    <EmbeddedResource Remove="RdNapTrans2008\**" />
+    <None Remove="RdNapTrans2008\**" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <PackageReference Include="MassTransit" Version="8.0.14" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="6.0.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.4" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="6.0.2" />
+    <PackageReference Include="GeoJSON" Version="2.3.1" />
+    <PackageReference Include="IdentityServer4.AccessTokenValidation" Version="3.0.1" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.3" />
+  </ItemGroup>
+  <Import Project="..\unisharedmodels\UNISharedModels\UNISharedModels.projitems" Label="Shared" />
+  <Import Project="..\surveycontracts\SurveyContracts\SurveyContracts.projitems" Label="Shared" />
+</Project>
