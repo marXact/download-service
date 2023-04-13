@@ -21,9 +21,10 @@ namespace DownloadService.Controllers
         private readonly ILogger<GeoXactController> _logger;
         private readonly IRequestClient<RequestRetrieveGeoXact> _clientExport;
 
-        public GeoXactController(ILogger<GeoXactController> logger)
+        public GeoXactController(ILogger<GeoXactController> logger, IRequestClient<RequestRetrieveGeoXact> clientExport)
         {
             _logger = logger;
+            _clientExport = clientExport;
 
         }
 

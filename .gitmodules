@@ -4,3 +4,6 @@
 [submodule "unisharedmodels"]
 	path = unisharedmodels
 	url = git@bitbucket.org:marxactdev/unisharedmodels.git
+[submodule "development-certificates"]
+	path = development-certificates
+	url = git@bitbucket.org:marxactdev/development-certificates.git

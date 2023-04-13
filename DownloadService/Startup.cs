@@ -4,6 +4,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 using IdentityServer4.AccessTokenValidation;
+using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -14,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using UNISharedModels.Request;
 
 namespace DownloadService
 {
@@ -65,6 +67,30 @@ namespace DownloadService
                     }
                     options.RequireHttpsMetadata = Convert.ToBoolean(requireHttpsMetadata);
                 });
+
+            // RabbitMQ
+            string rabbitMQHost = Configuration["RabbitMQ:Uri"];
+            string rabbitMQUsername = Configuration["RabbitMQ:Username"];
+            string rabbitMQPassword = Configuration["RabbitMQ:Password"];
+
+            services.AddMassTransit(x =>
+            {
+
+                x.SetKebabCaseEndpointNameFormatter();
+                x.UsingRabbitMq((context, settings) =>
+                {
+                    settings.ConfigureJsonSerializerOptions(settings => { settings.IncludeFields = true; return settings; });
+
+                    settings.Host(rabbitMQHost, connection =>
+                    {
+                        connection.Username(rabbitMQUsername);
+                        connection.Password(rabbitMQPassword);
+                    });
+
+                    settings.ConfigureEndpoints(context);
+                });
+                x.AddRequestClient<RequestRetrieveGeoXact>();
+            });
 
             services.AddAuthorization(options =>
             {
