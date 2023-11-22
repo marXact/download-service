@@ -170,22 +170,15 @@ namespace DownloadService
             app.UseCors(builder => builder
                .AllowAnyHeader()
                .AllowAnyMethod()
-               .AllowAnyOrigin()
+               .SetIsOriginAllowed((host) => true)
+               .AllowCredentials()
+               .WithExposedHeaders("X-Pagination")
             );
 
             app.UseRouting();
 
             app.UseAuthentication();
             app.UseAuthorization();
-
-            app.UseResponseCompression();
-            app.UseResponseCaching();
-
-            app.Use(async (context, next) =>
-            {
-                context.Response.Headers.Add("Referrer-Policy", "no-referrer");
-                await next.Invoke();
-            });
 
             app.UseEndpoints(endpoints =>
             {
