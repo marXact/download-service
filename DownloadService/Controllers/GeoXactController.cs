@@ -34,6 +34,7 @@ namespace DownloadService.Controllers
         {
             try
             {
+                _logger.LogInformation("Get Geojson shapes of: " + geoxactId);
                 var entity = await _clientExport.GetResponse<ResponseRetrieveGeoXact>(new { GeoXactId = geoxactId }, timeout: RequestTimeout.After(m: 5)).ConfigureAwait(false);
                 return new OkObjectResult(entity.Message.GeoXactJson);
             }
