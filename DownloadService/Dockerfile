@@ -15,8 +15,9 @@ RUN update-ca-certificates
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0-bullseye-slim AS build
 WORKDIR /src
-COPY ["DownloadService/KDownloadService.csproj", "DownloadService/"]
+COPY ["DownloadService/DownloadService.csproj", "DownloadService/"]
 COPY ["surveycontracts/SurveyContracts/SurveyContracts.shproj", "surveycontracts/SurveyContracts/"]
+COPY ["unisharedmodels/UNISharedModels/UNISharedModels.shproj", "unisharedmodels/UNISharedModels/"]
 RUN dotnet restore "DownloadService/DownloadService.csproj"
 COPY . .
 WORKDIR "/src/DownloadService"

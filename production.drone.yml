@@ -1,6 +1,6 @@
 ---
 kind: pipeline
-type: kubernetes 
+type: kubernetes
 name: staging
 
 # Pipeline steps
@@ -8,17 +8,17 @@ steps:
   - name: submodules
     image: alpine/git
     commands:
-    - git submodule update --init --recursive
+      - git submodule update --init --recursive
 
   - name: build-master
     image: plugins/docker
     pull: always
     settings:
-      repo: docker.marxact.io/marxactdev/klicservice
+      repo: docker.marxact.io/marxactdev/downloadservice
       context: .
-      dockerfile: KlicService/Dockerfile
+      dockerfile: DownloadService/Dockerfile
       auto_tag: true
-      registry: docker.marxact.io/marxactdev/klicservice
+      registry: docker.marxact.io/marxactdev/downloadservice
       username: marxact-registry
       password: 2020dReGiStry-marxact
     depends_on:

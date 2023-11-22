@@ -1,29 +1,24 @@
 version: "3.9"
 
 services:
-  #KlicService
-  klicservice:
-    image: klicservice:${KLICSERVICE_IMAGE_TAG}
+  #downloadservice
+  downloadservice:
+    image: downloadservice:${DOWNLOADSERVICE_IMAGE_TAG}
     restart: always
-    container_name: klicservice
+    container_name: downloadservice
     build:
-      context: ./klicservice
-      dockerfile: KlicService/Dockerfile
+      context: ./DownloadService
+      dockerfile: DownloadService/Dockerfile
     networks:
       - marxact-dev-network
     environment:
-      - ASPNETCORE_URLS=${KLICSERVICE_ASPNETCORE_URLS}
-      - ASPNETCORE_ENVIRONMENT=${KLICSERVICE_ASPNETCORE_ENVIRONMENT}
-      - SURVEYSERVICE_DB_HOST=${KLICSERVICE_DB_HOST}
-      - SURVEYSERVICE_DB_NAME=${KLICSERVICE_DB}
-      - SURVEYSERVICE_DB_USER=${KLICSERVICE_USER}
-      - SURVEYSERVICE_DB_PASSWORD=${KLICSERVICE_PASSWORD}
-      - SURVEYSERVICE_DB_PORT=${KLICSERVICE_DB_PORT}
-      - SURVEYSERVICE_SSL_MODE=${KLICSERVICE_SSL_MODE}
-      - ASPNETCORE_Kestrel__Certificates__Default__Path=${KLICSERVICE_CERT_PATH}
-      - ASPNETCORE_Kestrel__Certificates__Default__Password=${KLICSERVICE_CERT_PASSWORD}
+      - ASPNETCORE_URLS=${DOWNLOADSERVICE_ASPNETCORE_URLS}
+      - ASPNETCORE_ENVIRONMENT=${DOWNLOADSERVICE_ASPNETCORE_ENVIRONMENT}
+      - SURVEYSERVICE_SSL_MODE=${DOWNLOADSERVICE_SSL_MODE}
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=${DOWNLOADSERVICE_CERT_PATH}
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=${DOWNLOADSERVICE_CERT_PASSWORD}
     ports:
-      - "${KLICSERVICE_PORT}:${KLICSERVICE_PORT}"
+      - "${DOWNLOADSERVICE_PORT}:${DOWNLOADSERVICE_PORT}"
     extra_hosts:
       - "change.me:host-gateway"
 
