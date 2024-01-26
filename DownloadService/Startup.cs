@@ -7,6 +7,7 @@ using IdentityServer4.AccessTokenValidation;
 using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.ResponseCompression;
@@ -160,6 +161,12 @@ namespace DownloadService
                     options.SerializerSettings.DateFormatString = "yyyy-MM-ddTHH:mm:ssZ";
                     options.SerializerSettings.DateTimeZoneHandling = DateTimeZoneHandling.Local;
                 });
+
+            services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders =
+                    ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -190,6 +197,7 @@ namespace DownloadService
                 endpoints.MapControllers();
                 endpoints.MapHealthChecks("/hc");
             });
+            app.UseForwardedHeaders();
         }
     }
 }
