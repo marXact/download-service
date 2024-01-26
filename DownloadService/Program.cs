@@ -21,7 +21,6 @@ namespace DownloadService
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
-                    webBuilder.UseSetting("https_port", "8080");
                 });
     }
 }

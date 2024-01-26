@@ -133,9 +133,9 @@ namespace DownloadService
                     policy.RequireClaim("scope", "UNICloudApi");
                 });
                 // DownloadService Policies
-                options.AddPolicy("downloadservice", policy =>
+                options.AddPolicy("DownloadService", policy =>
                 {
-                    policy.RequireClaim("scope", "downloadservice");
+                    policy.RequireClaim("scope", "DownloadService");
                 });
             });
 
@@ -160,10 +160,6 @@ namespace DownloadService
                     options.SerializerSettings.DateFormatString = "yyyy-MM-ddTHH:mm:ssZ";
                     options.SerializerSettings.DateTimeZoneHandling = DateTimeZoneHandling.Local;
                 });
-            services.AddHttpsRedirection(options =>
-            {
-                options.HttpsPort = 5001;
-            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
