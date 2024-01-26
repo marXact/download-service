@@ -133,9 +133,9 @@ namespace DownloadService
                     policy.RequireClaim("scope", "UNICloudApi");
                 });
                 // DownloadService Policies
-                options.AddPolicy("DownloadService", policy =>
+                options.AddPolicy("downloadservice", policy =>
                 {
-                    policy.RequireClaim("scope", "DownloadService");
+                    policy.RequireClaim("scope", "downloadservice");
                 });
             });
 
