@@ -7,7 +7,6 @@ using IdentityServer4.AccessTokenValidation;
 using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.ResponseCompression;
@@ -161,11 +160,9 @@ namespace DownloadService
                     options.SerializerSettings.DateFormatString = "yyyy-MM-ddTHH:mm:ssZ";
                     options.SerializerSettings.DateTimeZoneHandling = DateTimeZoneHandling.Local;
                 });
-
-            services.Configure<ForwardedHeadersOptions>(options =>
+            services.AddHttpsRedirection(options =>
             {
-                options.ForwardedHeaders =
-                    ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+                options.HttpsPort = 5001;
             });
         }
 
@@ -197,7 +194,6 @@ namespace DownloadService
                 endpoints.MapControllers();
                 endpoints.MapHealthChecks("/hc");
             });
-            app.UseForwardedHeaders();
         }
     }
 }
