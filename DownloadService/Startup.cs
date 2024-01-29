@@ -137,6 +137,11 @@ namespace DownloadService
                 {
                     policy.RequireClaim("scope", "DownloadService");
                 });
+                // SurveyService Policies
+                options.AddPolicy("SurveyService", policy =>
+                {
+                    policy.RequireClaim("scope", "SurveyService");
+                });
             });
 
             services.AddHealthChecks();
