@@ -127,10 +127,20 @@ namespace DownloadService
                 {
                     policy.RequireClaim("role", "ReadOnly");
                 });
-                // KlicService Policies
-                options.AddPolicy("KlicService", policy =>
+                // UNICloudApi Policies
+                options.AddPolicy("UNICloudApi", policy =>
                 {
-                    policy.RequireClaim("scope", "KlicService");
+                    policy.RequireClaim("scope", "UNICloudApi");
+                });
+                // DownloadService Policies
+                options.AddPolicy("DownloadService", policy =>
+                {
+                    policy.RequireClaim("scope", "DownloadService");
+                });
+                // SurveyService Policies
+                options.AddPolicy("SurveyService", policy =>
+                {
+                    policy.RequireClaim("scope", "SurveyService");
                 });
             });
 
