@@ -79,7 +79,11 @@ namespace DownloadService
                 x.SetKebabCaseEndpointNameFormatter();
                 x.UsingRabbitMq((context, settings) =>
                 {
-                    settings.ConfigureJsonSerializerOptions(settings => { settings.IncludeFields = true; return settings; });
+                    settings.UseSystemTextJsonSerializer(settings =>
+                    {
+                        settings.IncludeFields = true;
+                        return settings;
+                    });
 
                     settings.Host(rabbitMQHost, connection =>
                     {
@@ -91,6 +95,8 @@ namespace DownloadService
                 });
                 x.AddRequestClient<RequestRetrieveGeoXact>();
             });
+
+            services.AddMassTransitHostedService();
 
             services.AddAuthorization(options =>
             {

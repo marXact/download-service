@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 #See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
-FROM mcr.microsoft.com/dotnet/aspnet:6.0-bullseye-slim AS base
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-bookworm-slim AS base
 WORKDIR /app
 
 # Copy self signed SSL certificate
@@ -13,7 +13,7 @@ RUN echo "marxact/signing-ca.crt" >> /etc/ca-certificates.conf
 RUN echo "marxact/root-ca.crt" >> /etc/ca-certificates.conf
 RUN update-ca-certificates
 
-FROM mcr.microsoft.com/dotnet/sdk:6.0-bullseye-slim AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0-bookworm-slim AS build
 WORKDIR /src
 COPY ["DownloadService/DownloadService.csproj", "DownloadService/"]
 COPY ["surveycontracts/SurveyContracts/SurveyContracts.shproj", "surveycontracts/SurveyContracts/"]
