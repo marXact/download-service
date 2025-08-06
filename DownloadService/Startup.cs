@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
+using AuthContracts.Requests;
 using IdentityServer4.AccessTokenValidation;
 using MassTransit;
 using Microsoft.AspNetCore.Builder;
@@ -14,7 +16,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using UniAuthHelper.Helpers;
+using UniAuthHelper.Services;
+using UniAuthHelper.Services.Interfaces;
 using UNISharedModels.Request;
 
 namespace DownloadService
@@ -31,42 +37,39 @@ namespace DownloadService
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme)
-                .AddIdentityServerAuthentication(options =>
+            // Disable the OpenIddict default claim type mapping for JWT tokens
+            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+            
+            // OpenIddict
+            string identityServerUrl = Environment.GetEnvironmentVariable("IdentityServerUrl");
+            string apiName = Environment.GetEnvironmentVariable("APIName");
+            string requireHttpsMetadata = Environment.GetEnvironmentVariable("RequireHttpsMetadata");
+            if (
+                string.IsNullOrEmpty(identityServerUrl) ||
+                string.IsNullOrEmpty(apiName) ||
+                string.IsNullOrEmpty(requireHttpsMetadata)
+            ) {
+                identityServerUrl = GetConfig("IdentityServer:Url");
+                apiName = GetConfig("IdentityServer:APIName");
+                requireHttpsMetadata = GetConfig("IdentityServer:RequireHttpsMetadata");
+            }
+
+            services.AddAuthentication().AddJwtBearer(options =>
+            {
+                options.Authority = identityServerUrl;
+                options.RequireHttpsMetadata = Convert.ToBoolean(requireHttpsMetadata);
+
+                options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    string identityServerUrl = System.Environment.GetEnvironmentVariable("IdentityServerUrl");
-                    if (string.IsNullOrEmpty(identityServerUrl))
-                    {
-                        identityServerUrl = Configuration["IdentityServer:Url"];
-                    }
-                    // base-address of your identityserver
-                    options.Authority = identityServerUrl;
+                    ValidateAudience = true,
+                    ValidAudience = apiName,
 
-                    string apiName = System.Environment.GetEnvironmentVariable("APIName");
-                    if (string.IsNullOrEmpty(apiName))
-                    {
-                        apiName = Configuration["IdentityServer:APIName"];
-                    }
-                    // name of the API resource
-                    options.ApiName = apiName;
+                    ValidateIssuer = true,
+                    ValidIssuer = identityServerUrl,
 
-                    string apiSecret = System.Environment.GetEnvironmentVariable("APISecret");
-                    if (string.IsNullOrEmpty(apiSecret))
-                    {
-                        apiSecret = Configuration["IdentityServer:APISecret"];
-                    }
-                    options.ApiSecret = apiSecret;
-
-                    options.EnableCaching = true;
-                    options.CacheDuration = TimeSpan.FromMinutes(10); // that's the default
-
-                    string requireHttpsMetadata = System.Environment.GetEnvironmentVariable("RequireHttpsMetadata");
-                    if (string.IsNullOrEmpty(requireHttpsMetadata))
-                    {
-                        requireHttpsMetadata = Configuration["IdentityServer:RequireHttpsMetadata"];
-                    }
-                    options.RequireHttpsMetadata = Convert.ToBoolean(requireHttpsMetadata);
-                });
+                    ValidateLifetime = true
+                };
+            });
 
             // RabbitMQ
             string rabbitMQHost = Configuration["RabbitMQ:Uri"];
@@ -75,11 +78,14 @@ namespace DownloadService
 
             services.AddMassTransit(x =>
             {
-
                 x.SetKebabCaseEndpointNameFormatter();
                 x.UsingRabbitMq((context, settings) =>
                 {
-                    settings.ConfigureJsonSerializerOptions(settings => { settings.IncludeFields = true; return settings; });
+                    settings.UseSystemTextJsonSerializer(settings =>
+                    {
+                        settings.IncludeFields = true;
+                        return settings;
+                    });
 
                     settings.Host(rabbitMQHost, connection =>
                     {
@@ -90,59 +96,15 @@ namespace DownloadService
                     settings.ConfigureEndpoints(context);
                 });
                 x.AddRequestClient<RequestRetrieveGeoXact>();
+                
+                //UNI AUTH HELPER
+                x.AddRequestClient<RequestUserPermissions>();
+                x.AddRequestClient<RequestAllPermissions>();
             });
 
-            services.AddAuthorization(options =>
-            {
-                // Role Policies
-                options.AddPolicy("UNICloudAdmin", policy =>
-                {
-                    policy.RequireClaim("role", "UNICloudAdministrator");
-                });
-                options.AddPolicy("UNISupport", policy =>
-                {
-                    policy.RequireClaim("role", "UNISupport");
-                });
-                options.AddPolicy("Admin", policy =>
-                {
-                    policy.RequireClaim("role", "Admin");
-                });
-                options.AddPolicy("Manager", policy =>
-                {
-                    policy.RequireClaim("role", "Manager");
-                });
-                options.AddPolicy("User", policy =>
-                {
-                    policy.RequireClaim("role", "User");
-                });
-                options.AddPolicy("FreeUser", policy =>
-                {
-                    policy.RequireClaim("role", "FreeUser");
-                });
-                options.AddPolicy("Device", policy =>
-                {
-                    policy.RequireClaim("role", "Device");
-                });
-                options.AddPolicy("ReadOnly", policy =>
-                {
-                    policy.RequireClaim("role", "ReadOnly");
-                });
-                // UNICloudApi Policies
-                options.AddPolicy("UNICloudApi", policy =>
-                {
-                    policy.RequireClaim("scope", "UNICloudApi");
-                });
-                // DownloadService Policies
-                options.AddPolicy("DownloadService", policy =>
-                {
-                    policy.RequireClaim("scope", "DownloadService");
-                });
-                // SurveyService Policies
-                options.AddPolicy("SurveyService", policy =>
-                {
-                    policy.RequireClaim("scope", "SurveyService");
-                });
-            });
+            services.AddMassTransitHostedService();
+
+            services.AddAuthorization();
 
             services.AddHealthChecks();
 
@@ -165,6 +127,27 @@ namespace DownloadService
                     options.SerializerSettings.DateFormatString = "yyyy-MM-ddTHH:mm:ssZ";
                     options.SerializerSettings.DateTimeZoneHandling = DateTimeZoneHandling.Local;
                 });
+            
+            // Uni-Auth Integration Setup
+            services.AddScoped<IUniAuthPermissionService, UniAuthPermissionService>();
+            
+            var redisHost = Environment.GetEnvironmentVariable("REDIS_HOST");
+            var redisPort = Environment.GetEnvironmentVariable("REDIS_PORT");
+            var redisPassword = Environment.GetEnvironmentVariable("REDIS_PASSWORD");
+
+            string redisConnectionString = $"{redisHost}:{redisPort}";
+
+            if (!string.IsNullOrEmpty(redisPassword)) {
+                redisConnectionString += $",password={redisPassword}";
+            }
+            
+            if (string.IsNullOrEmpty(redisHost) || string.IsNullOrEmpty(redisPort)) {
+                redisConnectionString = GetConfig("Redis:ConnectionString");
+            }
+            
+            services.AddUniAuthHelper(redisConnectionString);
+
+            services.AddHostedService<UniAuthPolicyInitializer>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -195,6 +178,11 @@ namespace DownloadService
                 endpoints.MapControllers();
                 endpoints.MapHealthChecks("/hc");
             });
+        }
+        
+        private string GetConfig(string key)
+        {
+            return Configuration[key] ?? throw new ArgumentNullException(key, "environment variable null");
         }
     }
 }

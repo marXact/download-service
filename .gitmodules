@@ -7,3 +7,9 @@
 [submodule "development-certificates"]
 	path = development-certificates
 	url = git@bitbucket.org:marxactdev/development-certificates.git
+[submodule "uni-auth-helper"]
+	path = uni-auth-helper
+	url = git@bitbucket.org:marxactdev/uni-auth-helper.git
+[submodule "auth-contracts"]
+	path = auth-contracts
+	url = git@bitbucket.org:marxactdev/auth-contracts.git
