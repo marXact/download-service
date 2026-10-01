@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
-using IdentityServer4.AccessTokenValidation;
 using MassTransit;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -14,6 +15,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using UNISharedModels.Request;
 
@@ -31,41 +33,33 @@ namespace DownloadService
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme)
-                .AddIdentityServerAuthentication(options =>
+            // The API Gateway authenticates the caller against IdentityServer before proxying, so
+            // this service only reads the claims out of the token. Validating a second time here
+            // costs an introspection roundtrip per request and takes the service down with
+            // IdentityServer, so the token is parsed without validation instead. This is only safe
+            // as long as the service is unreachable except through the gateway.
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
                 {
-                    string identityServerUrl = System.Environment.GetEnvironmentVariable("IdentityServerUrl");
-                    if (string.IsNullOrEmpty(identityServerUrl))
-                    {
-                        identityServerUrl = Configuration["IdentityServer:Url"];
-                    }
-                    // base-address of your identityserver
-                    options.Authority = identityServerUrl;
+                    options.MapInboundClaims = false;
 
-                    string apiName = System.Environment.GetEnvironmentVariable("APIName");
-                    if (string.IsNullOrEmpty(apiName))
+                    options.TokenValidationParameters = new TokenValidationParameters
                     {
-                        apiName = Configuration["IdentityServer:APIName"];
-                    }
-                    // name of the API resource
-                    options.ApiName = apiName;
+                        ValidateAudience = false,
+                        ValidateIssuer = false,
+                        ValidateLifetime = false,
+                        RequireSignedTokens = false,
+                        // On net6.0 the default handler is JwtSecurityTokenHandler, which rejects
+                        // anything that is not a JwtSecurityToken (IDX10506).
+                        SignatureValidator = (token, _) => new JwtSecurityToken(token),
 
-                    string apiSecret = System.Environment.GetEnvironmentVariable("APISecret");
-                    if (string.IsNullOrEmpty(apiSecret))
-                    {
-                        apiSecret = Configuration["IdentityServer:APISecret"];
-                    }
-                    options.ApiSecret = apiSecret;
-
-                    options.EnableCaching = true;
-                    options.CacheDuration = TimeSpan.FromMinutes(10); // that's the default
-
-                    string requireHttpsMetadata = System.Environment.GetEnvironmentVariable("RequireHttpsMetadata");
-                    if (string.IsNullOrEmpty(requireHttpsMetadata))
-                    {
-                        requireHttpsMetadata = Configuration["IdentityServer:RequireHttpsMetadata"];
-                    }
-                    options.RequireHttpsMetadata = Convert.ToBoolean(requireHttpsMetadata);
+                        // The IdentityServer handler this replaced used the short claim names.
+                        // Without these two, User.Identity.Name and IsInRole fall back to the
+                        // WS-Federation URIs and stop matching the "name" / "role" claims the
+                        // tokens actually carry.
+                        NameClaimType = "name",
+                        RoleClaimType = "role",
+                    };
                 });
 
             // RabbitMQ
@@ -92,57 +86,7 @@ namespace DownloadService
                 x.AddRequestClient<RequestRetrieveGeoXact>();
             });
 
-            services.AddAuthorization(options =>
-            {
-                // Role Policies
-                options.AddPolicy("UNICloudAdmin", policy =>
-                {
-                    policy.RequireClaim("role", "UNICloudAdministrator");
-                });
-                options.AddPolicy("UNISupport", policy =>
-                {
-                    policy.RequireClaim("role", "UNISupport");
-                });
-                options.AddPolicy("Admin", policy =>
-                {
-                    policy.RequireClaim("role", "Admin");
-                });
-                options.AddPolicy("Manager", policy =>
-                {
-                    policy.RequireClaim("role", "Manager");
-                });
-                options.AddPolicy("User", policy =>
-                {
-                    policy.RequireClaim("role", "User");
-                });
-                options.AddPolicy("FreeUser", policy =>
-                {
-                    policy.RequireClaim("role", "FreeUser");
-                });
-                options.AddPolicy("Device", policy =>
-                {
-                    policy.RequireClaim("role", "Device");
-                });
-                options.AddPolicy("ReadOnly", policy =>
-                {
-                    policy.RequireClaim("role", "ReadOnly");
-                });
-                // UNICloudApi Policies
-                options.AddPolicy("UNICloudApi", policy =>
-                {
-                    policy.RequireClaim("scope", "UNICloudApi");
-                });
-                // DownloadService Policies
-                options.AddPolicy("DownloadService", policy =>
-                {
-                    policy.RequireClaim("scope", "DownloadService");
-                });
-                // SurveyService Policies
-                options.AddPolicy("SurveyService", policy =>
-                {
-                    policy.RequireClaim("scope", "SurveyService");
-                });
-            });
+            services.AddAuthorization();
 
             services.AddHealthChecks();
 

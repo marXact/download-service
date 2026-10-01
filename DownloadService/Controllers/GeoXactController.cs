@@ -29,7 +29,7 @@ namespace DownloadService.Controllers
         }
 
         [HttpGet("{geoxactId}")]
-        [Authorize(Policy = "UNICloudApi", Roles = "User")]
+        [Authorize]
         [ResponseCache(Duration = 31536000)]
         public async Task<ActionResult> GetGeoXact(string geoxactId)
         {
